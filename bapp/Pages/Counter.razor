@@ -1,0 +1,137 @@
+﻿@page "/counter"
+@using System.Net.Http.Json;
+@using login6.services;
+@using login6.Models;
+@inject HttpClient Http;
+@inject IUserRepository userservice;
+<PageTitle>Register</PageTitle>
+
+<EditForm Model="@user" OnValidSubmit="@saveuser">
+   <div>
+       <label class="label1">Id</label>
+        <InputNumber class="form-control col-3" @bind-Value="@user.Id"></InputNumber>
+   </div>
+
+    <div>
+        <label class="label2">Name</label>
+        <InputText class="form-control col-3" @bind-Value="@user.Name" placeholder="Name" />
+    </div>
+    <div>
+        <label class="label3">Email</label>
+        <InputText class="form-control col-3" @bind-Value="@user.Email" placeholder="Email" />
+    </div>
+    <div>
+        <label class="label4">UserName</label>
+        <InputText class="form-control col-3" @bind-Value="@user.Username" placeholder="UserName" />
+    </div>
+    <div>
+        <label class="label5">Password</label>
+        <InputText class="form-control col-3" @bind-Value="@user.Password" placeholder="Password" />
+    </div>
+    <br />
+    <div>
+        <input type="submit" class="form-control col-1 btn btn-primary" value="Submit"/>
+    </div>
+</EditForm>
+
+<div>
+    <table> 
+        <tr>
+            <th>Id</th>
+            &nbsp;
+            &nbsp;
+            <th>Name</th>
+            &nbsp;
+            &nbsp;
+            <th>Email</th>
+            &nbsp;
+            &nbsp;
+            <th>Username</th>
+            &nbsp;
+            &nbsp;
+            <th>To Delete</th>
+            &nbsp;
+            &nbsp;
+            <th> To Edit </th>
+        </tr>
+
+@foreach(var v in userlist)
+{
+    <tr>
+        <td>@v.Id</td>
+        <td>@v.Name</td>
+        <td>@v.Email</td>
+        <td>@v.Username</td>
+       <td> <a class="link-primary" @onclick="(() => deleteuser(v.Id))">Delete</a>
+           </td>
+                <td><a class="link-primary" @onclick="(() => edituser(v.Id))"> Edit</a></td>
+               
+    </tr>
+    
+}
+</table>
+</div>
+
+@code {
+   // public User user { get; set; } 
+    User user= new User();
+    public List<User> userlist { get; set; }
+    private readonly HttpClient httpClient = new()
+        {
+            BaseAddress = new Uri("http://localhost:5253/api/User")
+    };
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("Task onIntialized");
+        base.OnInitialized();
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        user = new User();
+        userlist = new List<User>();
+
+
+
+        //  userlist = await Http.GetFromJsonAsync<List<User>>("http://localhost:5253/api/User");
+        // userlist = userlist.OrderByDescending(o => o.Id).ToList();
+
+        userlist = await httpClient.GetFromJsonAsync<List<User>>("http://localhost:5253/api/User");
+        await base.OnInitializedAsync();
+
+    }
+    private async Task loaduser()
+    {
+        userlist = await httpClient.GetFromJsonAsync<List<User>>("http://localhost:5253/api/User");
+        StateHasChanged();
+
+    }
+
+    private async void saveuser()
+    {
+
+        await httpClient.PostAsJsonAsync("http://localhost:5253/api/User", user);
+
+
+
+
+        await loaduser();
+        user = new User();
+        //userservice.AddUser(user);
+        //user = new User();
+    }
+    private async void deleteuser(int id)
+    {
+        await httpClient.DeleteAsync("http://localhost:5253/api/User/"+id);
+        await loaduser();
+    }
+
+    public async void edituser(int id) {
+        user = await httpClient.GetFromJsonAsync<User>("http://localhost:5253/api/User/" + id);
+        deleteuser(id);
+    
+
+    //  await httpClient.PutAsJsonAsync("http://localhost:5253/api/User/"+id,user);
+    }
+
+}

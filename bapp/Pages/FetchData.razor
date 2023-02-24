@@ -1,0 +1,75 @@
+﻿@page "/fetchdata"
+
+<PageTitle>Sign in</PageTitle>
+
+@using Microsoft.AspNetCore.Mvc;
+@using System.Net.Http.Json;
+@using login6.Models;
+@using login6.services;
+@using bapp.Data;
+@inject IUserRepository userservice;
+@inject NavigationManager NavManager;
+
+<h1>Sign in</h1>
+
+
+<body>
+    <EditForm Model="@user" on OnValidSubmit="(()=>savelogin(user))">
+    <div>
+       <InputNumber class="form-control col-3" @bind-Value="@user.Id" placeholder="Id"/>
+     </div>
+    <div>
+        <InputText class="form-control col-3" @bind-Value="@user.Username" placeholder="Username" />
+    </div>
+    <div>
+        <InputText class="form-control col-3" @bind-Value="@user.Password" placeholder="Password"/>
+    </div>
+
+    <div>
+        <Input type="submit" class="form-control col-1 btn btn-primary " value="Login"/>
+    </div>
+    </EditForm>
+</body> 
+
+
+@code{
+    login user = new login();
+
+    private readonly HttpClient httpClient;
+    List<User> userlist = new List<User>();
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+    }
+    public async void savelogin(login u)
+    {
+        List<User> userlist = new List<User>();
+
+        User v = await httpClient.GetFromJsonAsync<User>("http://localhost:5253/api/User/" + u.Id);
+        if (v == null)
+        {
+            NavManager.NavigateTo("/counter");
+        }
+
+         userlist = await httpClient.GetFromJsonAsync<List<User>>("http://localhost:5253/api/User");
+        //userlist = await httpClient.GetFromJsonAsync<List<User>>("http://localhost:5253/api/User");
+
+        foreach(var c in userlist)
+        {
+            Console.WriteLine("{0}", c.Id);
+            if(c.Id == v.Id)
+            {
+                if((c.Username == v.Username) && (c.Password == v.Password))
+                {
+                    NavManager.NavigateTo("/");
+                }
+            }
+        }
+        NavManager.NavigateTo("/counter");
+
+    }
+}
